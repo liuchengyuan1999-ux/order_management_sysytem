@@ -18,6 +18,7 @@ Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
+    //窗口的基本属性设置
     ui->setupUi(this);
     ui->tabWidget->setTabText(0,"主餐");
     ui->tabWidget->setTabText(1,"饮品");
@@ -30,10 +31,12 @@ Widget::Widget(QWidget *parent) :
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
-    //add back picture
+    //添加背景图片
     QPalette pal = this->palette();
     //pal.setBrush(QPalette::Background,QBrush(QPixmap(":/image/27.jpg")));//背景图
+    //这行代码的意思是重新应用配置好的调色板
     setPalette(pal);
+    //这个是数码管的管控件的设置，这里是总价格显示的数字的属性设置，flat意思是显示效果是平面的
     ui->lcdNumber->setSegmentStyle(QLCDNumber::Flat);
 
     //设置为只读模式
@@ -44,6 +47,7 @@ Widget::Widget(QWidget *parent) :
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // 使表宽度自适应
     ui->tableWidget_2->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // 使表宽度自适应
     ui->tableWidget_3->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // 使表宽度自适应
+    //这两行代码是点击菜品会将对应菜品的序号放进序号框的功能
     connect(ui->tableWidget_2,SIGNAL(itemClicked(QTableWidgetItem*)),this,SLOT(onMenuItemClicked(QTableWidgetItem*)));
     connect(ui->tableWidget_3,SIGNAL(itemClicked(QTableWidgetItem*)),this,SLOT(onMenuItemClicked(QTableWidgetItem*)));
 
@@ -59,7 +63,7 @@ Widget::Widget(QWidget *parent) :
 
     child = new childdorm();
     child->hide();
-    child->getData(this);   //通过this把父窗口的指针传到子窗口当中
+    child->getData(this);   //通过this把父窗口的两个容器指针传到子窗口当中
     connect(child,SIGNAL(Interface()),this,SLOT(comeback()));//信号槽
     connect(child,SIGNAL(Inter_delete()),this,SLOT(Delete()));//信号槽
 }
@@ -72,19 +76,17 @@ Widget::~Widget()
 void Widget::Init()//初始化
 {
     tcpsocket = new QTcpSocket(this);//创建客户端套接字
-
-
     connect(tcpsocket,&QTcpSocket::connected,//请求连接信号
            [=]()
     {
         //ui->textEdit->setText("成功连接服务器");
     }
     );
-
+    //端口和ip
     QString ip = "127.0.0.1";
     qint16 port = 8888;
     tcpsocket->connectToHost(QHostAddress(ip),port);
-
+    //这里其实就是赋初值
     strcpy(F_head.table,"\0");
     strcpy(F_head.number,"\0");
     strcpy(F_head.food,"order");  //放入标志位
@@ -99,6 +101,7 @@ void Widget::Init()//初始化
 
 void Widget::client()        //客服端操作
 {
+    //这里是请求菜单
     strcpy(F_head.table,"\0");
     strcpy(F_head.number,"\0");
     strcpy(F_head.food,"menu");  //放入标志位
@@ -109,12 +112,12 @@ void Widget::client()        //客服端操作
     QByteArray a1;
     a1.resize(sizeof(FoodInfo)*foodVec.size());
     memcpy(a1.data(),foodVec.data(),sizeof(FoodInfo)*foodVec.size());
-    tcpsocket->write(a1);
-
-
+    tcpsocket->write(a1);//这样就将请求订单的信息发送出去
+    //这是接收数据，接收服务端传来的数据
     connect(tcpsocket,&QTcpSocket::readyRead,
             [=]()
     {
+        //定义数组接收服务端传回的数据
         QByteArray array = tcpsocket->readAll();
         flag(array);     //数据解析
     }
@@ -123,52 +126,61 @@ void Widget::client()        //客服端操作
 
 void Widget::flag(QByteArray array) //服务端信息判断
 {
-    vector<MenuInfo> menuVec; //菜单容器
-    menuVec.resize(array.size()/sizeof(MenuInfo));
-    memcpy(menuVec.data(),array.data(),array.size());
+    vector<MenuInfo> menuVec; //定义一个菜单容器
+    menuVec.resize(array.size()/sizeof(MenuInfo));//重新定义容器长度
+    memcpy(menuVec.data(),array.data(),array.size());//把读取到的数据放进定义的容器里
+    //这里是打印订单传回来的容器的首个数据，这个数据代表的是容器中数据的信息
     qDebug()<<menuVec[0].food;
     if(strcmp(menuVec[0].food,"menu")==0)
     {
+        //如果传来的是菜单，就存一下，然后显示在窗口上
         MenuVec = menuVec;
         Menu_print();
     }
     else if(strcmp(menuVec[0].food,"chef_in")==0)
     {
+        //如果传来的是chef_in就说明这个是厨房传来的，然后需要更新已经上菜和未上菜的菜单
         Chef_in(menuVec);
     }
     else if(strcmp(menuVec[0].food,"order_ok")==0)
     {
-        QMessageBox::information(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE8\xAE\xA2\xE5\x8D\x95\xE6\x8F\x90\xE4\xBA\xA4\xE6\x88\x90\xE5\x8A\x9F\x21"));
+        QMessageBox::information(this, "提示", "订单提交成功!");
     }
     else if(strcmp(menuVec[0].food,"order_fail")==0)
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE8\xAE\xA2\xE5\x8D\x95\xE6\x8F\x90\xE4\xBA\xA4\xE5\xA4\xB1\xE8\xB4\xA5\xEF\xBC\x8C\xE8\xAF\xB7\xE6\xA3\x80\xE6\x9F\xA5\xE6\xA1\x8C\xE5\x8F\xB7\xE5\x92\x8C\xE6\x9C\x8D\xE5\x8A\xA1\xE7\xAB\xAF\xE7\x8A\xB6\xE6\x80\x81\x21"));
+        QMessageBox::warning(this, "提示", "订单提交失败，请检查桌号和服务端状态!");
     }
     else if(strcmp(menuVec[0].food,"delete_ok")==0)
     {
-        QMessageBox::information(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE9\x80\x80\xE9\xA4\x90\xE6\x88\x90\xE5\x8A\x9F\x21"));
+        QMessageBox::information(this, "提示", "退餐成功!");
     }
     else if(strcmp(menuVec[0].food,"delete_fail")==0)
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE6\x93\x8D\xE4\xBD\x9C\xE5\xA4\xB1\xE8\xB4\xA5\x21"));
+        QMessageBox::warning(this, "提示", "操作失败!");
     }
 
 }
 
 void Widget::Chef_in(vector<MenuInfo> menuVec)//上菜
 {
+    //这个判断只是用来判断传回数组是不是合法，如果只有一个元素，这里应该就是不正常的，直接返回
     if(menuVec.size() <= 1)
     {
         return;
     }
 
     bool moved = false;
+    //遍历整个未上菜的容器，
     for(int i = 0; i < FoodVec_no.size(); i++)
     {
+        //这里是判断服务端给的数组中的这个条记录，一般只有一个元素，因为厨师端是一个一个上菜的
+        //判断传来的这一条和未上菜的容器里的某一条记录一致
+        //这里数量quality和state相比仅仅是因为那个结构体里没有quality，临时用一个state这个位置
         if(strcmp(FoodVec_no[i].number,menuVec[1].number) == 0 &&
                 strcmp(FoodVec_no[i].price,menuVec[1].price) == 0 &&
                 strcmp(FoodVec_no[i].quatity,menuVec[1].state) == 0)
         {
+            //找到以后复制放到已上菜的容器中
             strcpy(F_head.table,FoodVec_no[i].table);
             strcpy(F_head.number,FoodVec_no[i].number);
             strcpy(F_head.food,FoodVec_no[i].food);
@@ -176,18 +188,22 @@ void Widget::Chef_in(vector<MenuInfo> menuVec)//上菜
             strcpy(F_head.quatity,FoodVec_no[i].quatity);
             strcpy(F_head.post,FoodVec_no[i].post);
             FoodVec_in.push_back(F_head);
+            //删除未上菜的菜单中的
             FoodVec_no.erase(FoodVec_no.begin()+i);
             moved = true;
             break;
         }
     }
 
+    //如果没有找到，刷新界面，然后退出
     if(!moved)
     {
+        //调用窗口的这个函数，将新生成的容器传给子窗口
         child->getvec(FoodVec_no,FoodVec_in);
         return;
     }
 
+    //如果找到了，并且成功更新两个容器，就会执行到这里
     for(int i = 1; i < FoodVec.size(); i++)
     {
         if(strcmp(FoodVec[i].number,menuVec[1].number) == 0 &&
@@ -195,12 +211,16 @@ void Widget::Chef_in(vector<MenuInfo> menuVec)//上菜
                 strcmp(FoodVec[i].quatity,menuVec[1].state) == 0 &&
                 strcmp(FoodVec[i].table,"0") != 0)
         {
+            //这里进行遍历，又借用了一下这个table位置，当作是否上菜的标志位了，和上面一样
             strcpy(FoodVec[i].table,"0");
             break;
         }
     }
+    //如果找到，就更新这两个容器在子窗口上的显示
     child->getvec(FoodVec_no,FoodVec_in);
 }
+
+//这个函数的意思就是把接收到的菜单放进ui显示的窗口里去
 void Widget::Menu_print()//打印菜单
 {
     QStringList headtext;
@@ -250,28 +270,33 @@ void Widget::Menu_print()//打印菜单
      }
 }
 
+
 void Widget::on_pushButton_3_clicked()//提交订单
 {
+    //因为在结构体里面，桌号使用的是C语言风格的char类型的数组，所以这里进行了一个转换
     QString S = ui->lineEdit->text(); //桌号
     char s[5];
     QByteArray ba = S.toUtf8();
     memcpy(s,ba.data(),ba.size()+1);  //加1是为了最后的终结符，否则转换回来的时候不知道什么时候截止
 
+
     if(S == "\0")
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE8\xAF\xB7\xE5\xA1\xAB\xE5\x86\x99\xE6\xA1\x8C\xE5\x8F\xB7\x21"));
+        QMessageBox::warning(this, "提示", "请填写桌号!");
     }
     else
     {
-       // qDebug()<< MenuVec[0].food;
+        //如果已经正确使用输入桌号
         strcpy(FoodVec[0].table,s);
-        int rowcount = ui->tableWidget->rowCount();//总行数
+        int rowcount = ui->tableWidget->rowCount();//获取总行数
         if(rowcount == 0)
         {
+            //这个框里行数等于0，说明这里没添加菜品，直接返回
             return;
         }
-
+        //如果有菜品，执行提交
         int validCount = 0;
+        //遍历每一条记录
         for (int j=0;j<rowcount;j++)
         {
             QString str = ui->tableWidget->item(j,0)->text(); //获取序号
@@ -279,6 +304,7 @@ void Widget::on_pushButton_3_clicked()//提交订单
             QString str2 = ui->tableWidget->item(j,2)->text();//获取价格
             QString str3 = ui->tableWidget->item(j,3)->text();//获取价格
             QString str4 = ui->tableWidget->item(j,4)->text();//获取备注
+            //这里是进行排除，不是有效的菜品来记录就跳过
             if(str.trimmed().isEmpty() || str1 == "menu")
             {
                 continue;
@@ -299,12 +325,13 @@ void Widget::on_pushButton_3_clicked()//提交订单
             ba = str4.toUtf8();
             memcpy(F_head.post,ba.data(),ba.size()+1);    //加1是为了最后的终结符，否则转换回来的时候不知道什么时候截止
 
-            FoodVec.push_back(F_head);//菜品信息放入容器中
-            FoodVec_no.push_back(F_head);//菜品信息放入未上菜单容器中
+            FoodVec.push_back(F_head);//有效菜品信息放入容器中
+            FoodVec_no.push_back(F_head);//有效菜品信息放入未上菜单容器中
         }
 
         if(validCount == 0)
         {
+            //有效菜品为0
             return;
         }
 
@@ -326,6 +353,7 @@ void Widget::on_pushButton_4_clicked()//退出
     QApplication::quit();
 }
 
+//这个函数是将点击的某条菜品的序号，放进点餐的输入框里
 void Widget::onMenuItemClicked(QTableWidgetItem *item)
 {
     if(item == NULL)
@@ -338,8 +366,9 @@ void Widget::onMenuItemClicked(QTableWidgetItem *item)
     {
         return;
     }
-
+    //输入菜品的序号框
     ui->lineEdit_2->setText(table->item(item->row(),0)->text());
+    //让当前控件获得焦点
     ui->lineEdit_3->setFocus();
 }
 
@@ -355,9 +384,11 @@ void Widget::on_pushButton_clicked()//添加菜品
 
     QByteArray ba = s.toUtf8();
     memcpy(number,ba.data(),ba.size()+1);//加1是为了最后的终结符，否则转换回来的时候不知道什么时候截止
+    //这个类是一个单元格的类
     QTableWidgetItem *column = new QTableWidgetItem(s);
     QString s1;
     QString s2;
+    //这里遍历是为了在整个菜单中找到我们选定的那个菜品的完整的信息，用s1和s2把搜到的菜品的价格和名称存一下
     for(int i = 1; i < MenuVec.size(); i++)
     {
         if(strcmp(MenuVec[i].number,number) == 0)
@@ -378,21 +409,24 @@ void Widget::on_pushButton_clicked()//添加菜品
     QString s4 = ui->lineEdit_4->text();//备注
     QTableWidgetItem *column4 = new QTableWidgetItem(s4);
 
+    //这是找到的标志位，将它放在同一行里
     if(flag == 1)
     {
-        int rowcount = ui->tableWidget->rowCount();//总行数
+        //这里是获取总行是，因为有个零行，所以这里插入的行数索引不用+1
+        int rowcount = ui->tableWidget->rowCount();
         ui->tableWidget->insertRow(rowcount);
         ui->tableWidget->setItem(rowcount,0,column);
         ui->tableWidget->setItem(rowcount,1,column1);
         ui->tableWidget->setItem(rowcount,2,column2);
         ui->tableWidget->setItem(rowcount,3,column3);
         ui->tableWidget->setItem(rowcount,4,column4);
+        //更新总价格，这里显示是使用LCD的方式
         m_sum = m_sum+s2.toFloat()*s3.toInt();
         ui->lcdNumber->display(m_sum);
     }
     else
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE8\xBE\x93\xE5\x85\xA5\xE6\x9C\x89\xE8\xAF\xAF\x21"));
+        QMessageBox::warning(this, "提示", "输入有误!");
     }
 
 }
@@ -401,14 +435,15 @@ void Widget::on_pushButton_2_clicked() //删除
 {
     if(ui->tableWidget->selectedItems().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE6\x93\x8D\xE4\xBD\x9C\xE6\x9C\x89\xE8\xAF\xAF\x21"));
+        QMessageBox::warning(this, "提示", "操作有误!");
         return;
     }
 
+    //这个是获取当前行的函数
     int currow = ui->tableWidget->currentRow();
     if(currow == -1)
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE6\x93\x8D\xE4\xBD\x9C\xE6\x9C\x89\xE8\xAF\xAF\x21"));
+        QMessageBox::warning(this, "提示", "操作有误!");
         return;
     }
 
@@ -416,6 +451,7 @@ void Widget::on_pushButton_2_clicked() //删除
     QTableWidgetItem *quantityItem = ui->tableWidget->item(currow,3);
     if(priceItem != NULL && quantityItem != NULL)
     {
+        //更新价格
         m_sum -= priceItem->text().toFloat() * quantityItem->text().toInt();
         if(m_sum < 0)
         {
@@ -424,21 +460,24 @@ void Widget::on_pushButton_2_clicked() //删除
         ui->lcdNumber->display(m_sum);
     }
 
+    //删除当前行，取消整个表格的选中状态，防止补上来的一行还是在高亮的选中状态
     ui->tableWidget->removeRow(currow);
     ui->tableWidget->clearSelection();
+    //这一行是将整个表格设置为无效状态，避免还有行被选中
     ui->tableWidget->setCurrentCell(-1,-1);
 }
 
 void Widget::comeback()//信号槽,显示父窗口
 {
-    //判断该桌号是否点过餐
+    //判断该桌号是否点过餐，就是说容器开头等于结尾，说明没有数据
     if(FoodVec.begin() != FoodVec.end())
     {
         QString Table = FoodVec[0].table;
+        //有点细节，这里是返回点餐界面，读取这个订单的桌号，放回桌号的方框，然后不允许修改桌号
         ui->lineEdit->setText(Table);
-
-        ui->lineEdit->setFocusPolicy(Qt::NoFocus);  //设置为只读模式
+        ui->lineEdit->setFocusPolicy(Qt::NoFocus);  //设置为只读模式，其实是无法获得鼠标焦点了
     }
+    //清空右侧订单
     ui->tableWidget->setRowCount(0);
     m_sum = 0;
     this->show();

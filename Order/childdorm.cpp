@@ -27,13 +27,11 @@ childdorm::childdorm(QWidget *parent) :
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
-    //add back picture
+    //增加背景图片
     QPalette pal = this->palette();//yunxu yong bi
    // pal.setBrush(QPalette::Background,QBrush(QPixmap(":/image/27.jpg")));//背景图
     setPalette(pal);
 
-   //child = new Widget;
-   //child->hide();
 
 }
 
@@ -48,7 +46,7 @@ void childdorm::on_pushButton_3_clicked()//加餐
     emit Interface();
 }
 
-
+//通过this把父窗口的两个容器指针传到子窗口当中
 void childdorm::getData(QWidget *parent) //获取父窗口指针
 {
     //获取父窗口变量
@@ -122,14 +120,14 @@ void childdorm::Delete_food()
 {
     if(ui->tableWidget->selectedItems().isEmpty())
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE6\x93\x8D\xE4\xBD\x9C\xE5\xA4\xB1\xE8\xB4\xA5\x21"));
+        QMessageBox::warning(this, "提示", "操作失败!");
         return;
     }
 
     int currow = ui->tableWidget->currentRow();
     if(currow == -1)
     {
-        QMessageBox::warning(this, QString::fromUtf8("\xE6\x8F\x90\xE7\xA4\xBA"), QString::fromUtf8("\xE6\x93\x8D\xE4\xBD\x9C\xE5\xA4\xB1\xE8\xB4\xA5\x21"));
+        QMessageBox::warning(this, "提示", "操作失败!");
         return;
     }
 
@@ -183,17 +181,19 @@ void childdorm::Delete_food()
     strcpy(FoodVec->at(0).food,"order");
 }
 
-void childdorm::on_pushButton_clicked()//催餐
+void childdorm::on_pushButton_clicked()//催餐，假的，根本没有催餐
 {
     QMessageBox::warning(this,"催餐","催餐成功!\n厨师正在努力中,请耐心等待!");
 }
 
 void childdorm::on_pushButton_2_clicked()//退餐
 {
+    //这个是信号槽的发送信号
     emit Inter_delete();
 }
 
 void childdorm::on_pushButton_4_clicked()//退出
 {
+    //退出
     QApplication::quit();
 }

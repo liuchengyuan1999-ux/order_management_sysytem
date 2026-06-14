@@ -40,7 +40,6 @@ private:
     vector<FoodInfo> DeleteVec;//退餐容器
     QTcpSocket *tcpsocket;
     Widget * p;
-    //Widget *child;
 
 };
 

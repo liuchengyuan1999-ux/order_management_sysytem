@@ -28,8 +28,8 @@ public:
     void flag(QByteArray array);//标志位判断
     void Menu_print();//打印菜单
     void Chef_in(vector<MenuInfo> menuVec);//上菜
-   // friend class childdorm;
-
+    // friend class childdorm;
+    //这里就是get函数，就是成员变量对外的接口，返回值是一个容器的指针
     vector<FoodInfo>* getVecNo(){return &FoodVec_no;}
     vector<FoodInfo>* getVec(){return &FoodVec;}
     QTcpSocket * getsocket(){return tcpsocket;}
@@ -56,7 +56,7 @@ public:
     QTcpSocket *tcpsocket;
     vector<MenuInfo> MenuVec;//菜单容器
     MenuInfo M_head;//菜单结构体
-    childdorm *child ;
+    childdorm *child ;//这里定义的是另一个窗口的类
 };
 
 

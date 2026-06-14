@@ -33,8 +33,8 @@ public:
     Ui::Widget *ui;
     //QSqlDatabase db;
     FoodInfo F_head;
-    vector<FoodInfo> FoodVec;
-    vector<FoodInfo> foodVec;//订单结构体
+    vector<FoodInfo> FoodVec;//订单结构体，用于接收
+    vector<FoodInfo> foodVec;//订单结构体，用于发送
     QTcpSocket *tcpsocket;
 };
 

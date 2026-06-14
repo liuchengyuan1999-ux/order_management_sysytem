@@ -18,7 +18,7 @@ Widget::Widget(QWidget *parent) :
     ui(new Ui::Widget)
 {
     ui->setupUi(this);
-    this->setFixedSize(1500,800);//背景图尺寸
+    this->setFixedSize(1500,800);//窗口尺寸
     this->setWindowTitle(QStringLiteral("厨房"));
    // this->move(QPoint(100,100));
     this->setWindowIcon(QIcon(":/image/3.png"));//APP图标
@@ -27,12 +27,12 @@ Widget::Widget(QWidget *parent) :
     QDesktopWidget* desktop = QApplication::desktop();
     move((desktop->width() - this->width())/2, (desktop->height() - this->height())/2);
 
-    //设置为只读模式
+    //设置为只读模式，厨房段不允许改动菜品信息
     ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // 使表宽度自适应
 
-    //add back picture
-    QPalette pal = this->palette();//yunxu yong bi
+    //背景图片
+    QPalette pal = this->palette();//
     //pal.setBrush(QPalette::Background,QBrush(QPixmap(":/image/27.jpg")));//背景图
     setPalette(pal);
 
@@ -68,7 +68,7 @@ void Widget::Init()
 }
 
 void Widget::client()
-{//客户端操作
+{
     foodVec.clear();
     strcpy(F_head.table,"\0");
     strcpy(F_head.number,"\0");
@@ -83,12 +83,11 @@ void Widget::client()
     memcpy(a1.data(),foodVec.data(),sizeof(FoodInfo)*foodVec.size());
     tcpsocket->write(a1);
 
-
+    //刷新按钮只是向服务端发送数据请求，然后还是在这里实时接收和显示
     connect(tcpsocket,&QTcpSocket::readyRead,
             [=]()
     {
         QByteArray array = tcpsocket->readAll();
-        //qDebug()<< array;
         Order_print(array);     //订单打印
     }
     );
@@ -111,7 +110,6 @@ void Widget::Order_print(QByteArray array) //订单打印
     }
     int rowcount;
     qDebug()<< FoodVec.size();
-    //qDebug()<<FoodVec[7].food;
     for (int j=0;j< FoodVec.size();j++)
     {
         qDebug()<<FoodVec[j].food;
@@ -136,6 +134,7 @@ void Widget::Order_print(QByteArray array) //订单打印
 
 void Widget::on_pushButton_clicked()//上菜
 {
+    //反复使用这个容器作为发送容器
     foodVec.clear();
     strcpy(F_head.table,"\0");
     strcpy(F_head.number,"\0");
