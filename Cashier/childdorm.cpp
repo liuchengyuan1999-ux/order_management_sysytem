@@ -215,7 +215,7 @@ void childdorm::cashier_refresh()//刷新餐桌状态
     ui->tableWidget_2->setHorizontalHeaderLabels(headtext);
     ui->tableWidget_2->setRowCount(0);
 
-    for (int j=0; j<FoodVec.size(); j++)
+    for (int j=1; j<FoodVec.size(); j++)
     {
         int rowcount = ui->tableWidget_2->rowCount();
         ui->tableWidget_2->insertRow(rowcount);

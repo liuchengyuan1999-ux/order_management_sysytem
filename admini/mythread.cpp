@@ -254,6 +254,9 @@ void mythread::cashier_finish()
         success = query.exec(sql) && success;
     }
 
+    // 结账成功后，该桌重新变为空闲状态
+    success = query.exec(QString::fromUtf8("update 餐桌 set 状态 = '未使用' where 桌号 = '%1'").arg(Table)) && success;
+
     if(success)
     {
         success = db.commit();
@@ -334,7 +337,7 @@ void mythread::chef_in()
     }
 
     int n = QString(Foodvec[1].table).toInt();
-    if(n <= 0 || n >= 21)
+    if(n < 0 || n >= 21)
     {
         return;
     }
@@ -443,6 +446,12 @@ void mythread::order_food()
     }
     else
     {
+        if(success && hasFood)
+        {
+            // 提交订单成功后，餐桌状态改成使用中，收银端刷新餐桌状态时会读到这个变化
+            success = query.exec(QString::fromUtf8("update 餐桌 set 状态 = '使用中' where 桌号 = '%1'").arg(Table)) && success;
+        }
+
         sendOrderResult(success && hasFood ? "order_ok" : "order_fail");
     }
 

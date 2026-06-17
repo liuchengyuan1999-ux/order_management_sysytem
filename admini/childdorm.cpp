@@ -400,18 +400,15 @@ void childdorm::on_pushButton_4_clicked()//删除用户
      char str[100];
      //获取当前被选中的行索引
      int currow = ui->tableWidget->currentRow();
-     //取出用户名
-     QString name= ui->tableWidget->item(currow,0)->text();
-     //把这个Qt字符串转化成C++标准字符串，因为后面的sprintf这个函数不能处理Qt的Qstring函数
-     std::string s1 = name.toStdString();
-     //这里是在判断，有没有选中，没选中某一行，就会返回-1
-     if(currow == -1)
+     if(currow == -1 || ui->tableWidget->item(currow, 0) == nullptr)
      {
-         //这里有个bug，你先取索引，有用索引取了记录里的用户名，才判断是否是-1，很有可能在取用户名的地方崩溃
          QMessageBox::warning(this,"提示","操作有误!");
      }
      else
      {
+         QString name= ui->tableWidget->item(currow,0)->text();
+         //把这个Qt字符串转化成C++标准字符串，因为后面的sprintf这个函数不能处理Qt的Qstring函数
+         std::string s1 = name.toStdString();
          //如果成功选中，就在这里拼接sql语句，函数c_str是将字符串换成C语言风格，也就是sprintf能处理的字符数组形式
          sprintf(str,"delete from 用户 where 用户名 = '%s'",s1.c_str());
         //执行操作
@@ -443,16 +440,15 @@ void childdorm::on_pushButton_9_clicked() //删除菜
     QSqlQuery query(db);
     char str[100];
     int currow = ui->tableWidget_3->currentRow();//当前行
-    QString number= ui->tableWidget_3->item(currow,0)->text();
-
-    std::string s1 = number.toStdString();
-
-    if(currow == -1)
+    if(currow == -1 || ui->tableWidget_3->item(currow, 0) == nullptr)
     {
         QMessageBox::warning(this,"提示","操作有误!");
+        return;
     }
     else
     {
+        QString number= ui->tableWidget_3->item(currow,0)->text();
+        std::string s1 = number.toStdString();
         sprintf(str,"delete from 菜单 where 序号 = '%s'",s1.c_str());
 
         query.exec(str);
@@ -481,16 +477,15 @@ void childdorm::on_pushButton_14_clicked()//删除饮品
     QSqlQuery query(db);
     char str[100];
     int currow = ui->tableWidget_4->currentRow();//当前行
-    QString number= ui->tableWidget_4->item(currow,0)->text();
-
-    std::string s1 = number.toStdString();
-
-    if(currow == -1)
+    if(currow == -1 || ui->tableWidget_4->item(currow, 0) == nullptr)
     {
         QMessageBox::warning(this,"提示","操作有误!");
+        return;
     }
     else
     {
+        QString number= ui->tableWidget_4->item(currow,0)->text();
+        std::string s1 = number.toStdString();
         sprintf(str,"delete from 饮品 where 序号 = '%s'",s1.c_str());
 
         query.exec(str);

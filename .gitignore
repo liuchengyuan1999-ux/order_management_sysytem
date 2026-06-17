@@ -34,3 +34,6 @@ Thumbs.db
 *.tmp
 *.log
 *.autosave
+
+# Large demo videos
+*.mp4
